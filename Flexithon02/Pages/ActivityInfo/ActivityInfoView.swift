@@ -54,7 +54,7 @@ struct ActivityInfoView: View {
                 // Navigation to confirmation
                 if userSelection.selectedActivity != nil {
                     NavigationLink(destination: ConfirmationView()) {
-                        Text("Continue")
+                        Text("Join")
                             .appButtonStyle(style: .primary)
                     }
                     .padding(.top)

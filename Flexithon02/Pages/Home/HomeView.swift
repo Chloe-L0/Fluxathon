@@ -150,7 +150,7 @@ struct HomeView: View {
                 Text("Find Activities")
                     .appButtonStyle(style: .primary)
             }
-            .padding(.top, 10)
+            .padding(.top, 20)
         }
         .appCardStyle()
         .padding(.horizontal)

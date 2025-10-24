@@ -81,11 +81,11 @@ struct ConfirmationView: View {
                         .appButtonStyle(style: .primary)
                 }
                 
-                // Cancel/Back Button
+                // Back Button
                 Button(action: {
                     dismiss()
                 }) {
-                    Text("Go Back")
+                    Text("Back")
                         .foregroundColor(.secondary)
                 }
             }
