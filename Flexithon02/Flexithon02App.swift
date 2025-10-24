@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct Flexithon02App: App {
+    @StateObject private var userSelection = UserSelection()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                HomeView()
+            }
+            .environmentObject(userSelection)
         }
     }
 }

@@ -11,7 +11,7 @@ import Combine
 import CoreLocation
 
 @MainActor
-class WeatherViewModel: ObservableObject {
+class HomeViewModel: ObservableObject {
     // MARK: - Published Properties
 
     @Published var weather: WeatherData?

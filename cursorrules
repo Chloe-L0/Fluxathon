@@ -1,0 +1,437 @@
+# Cursor AI Rules for SwiftUI Team Project
+
+## Project Overview
+This is a SwiftUI mobile app with 3 pages designed for team collaboration. Each page is independently developed to minimize merge conflicts.
+
+---
+
+## 🏗️ Architecture Rules
+
+### File Organization
+```
+YourAppName/
+├── Pages/              # Each team member owns one page folder
+│   ├── Home/
+│   ├── PageTwo/
+│   └── PageThree/
+├── Shared/             # Shared resources
+├── Models/             # Data models
+├── Services/           # API, Storage
+└── Navigation/         # App navigation
+```
+
+### Page Structure
+Each page folder contains:
+- `[PageName]View.swift` - SwiftUI view
+- `[PageName]ViewModel.swift` - ObservableObject for business logic
+- `Components/` - Page-specific components
+- `Models/` (optional) - Page-specific models
+
+---
+
+## 📝 Code Generation Rules
+
+### 1. SwiftUI View Pattern
+When creating a new view, always use this pattern:
+
+```swift
+import SwiftUI
+
+struct [ViewName]: View {
+    @StateObject private var viewModel = [ViewName]ViewModel()
+    
+    var body: some View {
+        NavigationView {
+            // Content here
+        }
+        .navigationTitle("[Title]")
+        .onAppear {
+            viewModel.loadData()
+        }
+    }
+}
+
+#Preview {
+    [ViewName]()
+}
+```
+
+### 2. ViewModel Pattern
+Always create a corresponding ViewModel:
+
+```swift
+import Foundation
+
+class [ViewName]ViewModel: ObservableObject {
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    
+    func loadData() {
+        // Data loading logic
+    }
+}
+```
+
+### 3. Component Placement Rules
+- **Page-specific components** → `Pages/[PageName]/Components/`
+- **Reusable components** → `Shared/Components/`
+- Always ask: "Will other pages use this?" before deciding placement
+
+### 4. Use Shared Theme
+Always reference the shared theme for consistency:
+
+```swift
+// Colors
+AppTheme.Colors.primary
+AppTheme.Colors.secondary
+AppTheme.Colors.background
+
+// Spacing
+AppTheme.Spacing.small      // 8
+AppTheme.Spacing.medium     // 16
+AppTheme.Spacing.large      // 24
+
+// Corner Radius
+AppTheme.CornerRadius.small  // 8
+AppTheme.CornerRadius.medium // 12
+```
+
+---
+
+## 🎯 Naming Conventions
+
+### Files
+- Views: `PascalCase` + `View.swift` (e.g., `HomeView.swift`, `UserProfileView.swift`)
+- ViewModels: `PascalCase` + `ViewModel.swift` (e.g., `HomeViewModel.swift`)
+- Components: `PascalCase` + descriptive name (e.g., `UserCardView.swift`)
+- Extensions: `Type` + `+Extension.swift` (e.g., `String+Extensions.swift`)
+
+### Variables & Functions
+- Use `camelCase` for variables and functions
+- Use descriptive names: `fetchUserData()` not `getData()`
+- Bool properties: start with `is`, `has`, `should` (e.g., `isLoading`, `hasError`)
+
+### Constants
+- Use `static let` for constants
+- Group in structs/enums for organization
+
+---
+
+## 🔒 Access Control Rules
+
+1. **Use `private` by default** for ViewModels properties
+2. **Use `@Published`** for properties that update UI
+3. **Use `private(set)`** for read-only published properties:
+   ```swift
+   @Published private(set) var items: [Item] = []
+   ```
+
+---
+
+## 🧩 Component Creation Guidelines
+
+### When to Create a Component
+Create a reusable component when:
+- Used in 2+ places
+- Self-contained functionality
+- Can be tested independently
+
+### Component Template
+```swift
+import SwiftUI
+
+struct [ComponentName]: View {
+    // MARK: - Properties
+    let title: String
+    let action: () -> Void
+    
+    // MARK: - Body
+    var body: some View {
+        // Implementation
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    [ComponentName](title: "Example", action: {})
+}
+```
+
+---
+
+## 📊 State Management Rules
+
+### Use Appropriate Property Wrappers
+- `@State` - Simple view-local state
+- `@StateObject` - Create and own ObservableObject
+- `@ObservedObject` - Observe existing ObservableObject
+- `@Binding` - Two-way binding to parent's state
+- `@Environment` - Access environment values
+
+### Example:
+```swift
+struct ParentView: View {
+    @StateObject private var viewModel = ViewModel()
+    @State private var isShowingSheet = false
+    
+    var body: some View {
+        ChildView(isShowing: $isShowingSheet)
+    }
+}
+
+struct ChildView: View {
+    @Binding var isShowing: Bool
+    // ...
+}
+```
+
+---
+
+## 🌐 Networking Rules
+
+### API Calls
+1. Always use `async/await`
+2. Handle errors with `do-catch`
+3. Use the shared `APIService`
+
+```swift
+func fetchData() {
+    Task {
+        isLoading = true
+        do {
+            let data: [Item] = try await APIService.shared.fetchData(from: endpoint)
+            await MainActor.run {
+                self.items = data
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+}
+```
+
+---
+
+## 🎨 UI/UX Best Practices
+
+### Layout
+- Use `VStack`, `HStack`, `ZStack` for layouts
+- Use `Spacer()` for flexible spacing
+- Use `.padding()` consistently with theme spacing
+
+### Accessibility
+- Always add `.accessibilityLabel()` to images
+- Use `.accessibilityHint()` for interactive elements
+- Test with VoiceOver
+
+### Dark Mode
+- Use semantic colors from `AppTheme.Colors`
+- Avoid hardcoded colors
+- Test in both light and dark mode
+
+---
+
+## 🔍 Code Quality Rules
+
+### Comments
+- Use `// MARK: -` to organize code sections
+- Write comments for complex logic only
+- Keep code self-documenting with clear names
+
+### Code Organization
+```swift
+// MARK: - Properties
+// All @State, @StateObject, let, var
+
+// MARK: - Body
+var body: some View { }
+
+// MARK: - Private Methods
+private func helperMethod() { }
+
+// MARK: - Preview
+#Preview { }
+```
+
+### SwiftUI Best Practices
+- Extract subviews when body exceeds 10 lines
+- Avoid force unwrapping (`!`)
+- Use `if let` or `guard let` for optionals
+- Prefer `.task` over `.onAppear` for async work
+
+---
+
+## 🚫 What NOT to Do
+
+1. ❌ Don't modify files in other team members' page folders
+2. ❌ Don't use hardcoded colors or spacing values
+3. ❌ Don't create massive view files (>200 lines - extract components)
+4. ❌ Don't use `@EnvironmentObject` without documenting
+5. ❌ Don't commit print statements for debugging
+6. ❌ Don't ignore SwiftLint warnings
+7. ❌ Don't use `AnyView` excessively (type erasure)
+8. ❌ Don't nest more than 3 levels of views
+
+---
+
+## ✅ File Creation Checklist
+
+When creating a new page or component:
+- [ ] Created View file with proper naming
+- [ ] Created ViewModel if needed
+- [ ] Added `#Preview` at bottom
+- [ ] Used shared theme constants
+- [ ] Organized with `// MARK:` comments
+- [ ] Added to correct folder (Page vs Shared)
+- [ ] Tested in simulator
+- [ ] Checked in both light and dark mode
+
+---
+
+## 🧪 Testing Guidelines
+
+### Preview Content
+Always include realistic preview data:
+
+```swift
+#Preview {
+    HomeView()
+}
+
+#Preview("Loading State") {
+    let viewModel = HomeViewModel()
+    viewModel.isLoading = true
+    return HomeView(viewModel: viewModel)
+}
+
+#Preview("Error State") {
+    let viewModel = HomeViewModel()
+    viewModel.errorMessage = "Failed to load"
+    return HomeView(viewModel: viewModel)
+}
+```
+
+---
+
+## 🔄 Git Integration
+
+### Before Suggesting Code
+- Check which page folder user is working in
+- Only suggest changes to their assigned page
+- If shared component needed, mention coordination requirement
+
+### When User Asks to "Add Feature"
+1. Determine if feature is page-specific or shared
+2. Place code in appropriate folder
+3. Generate both View and ViewModel if needed
+4. Include preview code
+5. Remind about testing
+
+---
+
+## 💡 Context-Aware Assistance
+
+### When User Says:
+- **"Add a button"** → Use `AppTheme` colors and proper accessibility
+- **"Create a list"** → Use `List` or `ScrollView` with proper `ForEach`
+- **"Show loading"** → Use `ProgressView()` with `isLoading` state
+- **"Handle errors"** → Show error alert with `errorMessage` binding
+- **"Make it reusable"** → Create in `Shared/Components/`
+
+---
+
+## 📱 Device Support
+
+Always consider:
+- iPhone (all sizes)
+- iPad (if applicable)
+- Landscape and portrait orientations
+- Different text sizes (Dynamic Type)
+
+Use `.frame(maxWidth: .infinity)` for responsive layouts
+
+---
+
+## 🎓 Quick Reference
+
+### Common Modifiers Order
+```swift
+.font()
+.foregroundColor()
+.padding()
+.background()
+.cornerRadius()
+.shadow()
+```
+
+### Safe Navigation
+```swift
+NavigationLink(destination: DetailView(item: item)) {
+    // Link content
+}
+```
+
+### Conditional Rendering
+```swift
+if condition {
+    View1()
+} else {
+    View2()
+}
+```
+
+---
+
+## 🤖 Cursor AI Behavior
+
+**When generating code:**
+1. Always follow the patterns in this document
+2. Include all necessary imports
+3. Add `#Preview` at the end
+4. Use proper MARK comments
+5. Follow naming conventions
+6. Use shared theme constants
+7. Include error handling
+8. Consider accessibility
+
+**When refactoring:**
+1. Maintain existing patterns
+2. Improve without breaking functionality
+3. Suggest better organization if needed
+4. Keep file in appropriate folder
+
+**When explaining:**
+1. Reference this rules file
+2. Show examples from patterns
+3. Explain why, not just what
+4. Suggest best practices
+
+---
+
+## 📞 Priority Guidelines
+
+**HIGH PRIORITY:**
+- Code compiles without errors
+- Follows MVVM pattern
+- Uses shared theme
+- Proper folder placement
+- Includes previews
+
+**MEDIUM PRIORITY:**
+- Accessibility labels
+- Dark mode support
+- Error handling
+- Code organization
+
+**LOW PRIORITY:**
+- Animation polish
+- Advanced features
+- Performance optimization
+
+---
+
+**Remember: Code quality > Speed. Consistency > Cleverness.**
