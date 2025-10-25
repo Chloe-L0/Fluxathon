@@ -174,14 +174,14 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
+                HStack(spacing: 24) {
                     // Outdoor Volleyball Card
                     volleyballCard()
                     
                     // Escape Room Card
                     escapeRoomCard()
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 24)
             }
         }
     }
@@ -189,201 +189,62 @@ struct HomeView: View {
     // MARK: - Volleyball Card
     
     private func volleyballCard() -> some View {
-        VStack(spacing: 0) {
-            // Main card with yellow-orange background
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.orange)
-                    .frame(height: 160)
-                
-                VStack {
-                    // Top row with Sunny tag and temperature
-                    HStack {
-                        // Sunny tag
-                        Text("Sunny")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.yellow)
-                            .cornerRadius(12)
-                        
-                        Spacer()
-                        
-                        // Temperature range
-                        Text("72-78 °F")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.black)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 12)
-                    
-                    Spacer()
-                    
-                    // Bottom row with content and character
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            // Activity title with star
-                            HStack {
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.black)
+        NavigationLink(destination: ActivityInfoView()) {
+            VStack(spacing: 0) {
+                // Main card with HP6.png background
+                ZStack {
+                    if let image = UIImage(named: "HP6") {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(height: 230)  // ← Make image bigger by increasing height
+                            .clipped()
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange)
+                            .frame(height: 230)
+                            .overlay(
+                                Text("HP6 Image Not Found")
+                                    .foregroundColor(.white)
                                     .font(.caption)
-                                Text("Outdoor Volleyball")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.black)
-                            }
-                            
-                            // Time with clock
-                            HStack {
-                                Image(systemName: "clock")
-                                    .foregroundColor(.black)
-                                    .font(.caption)
-                                Text("Today 3:00 pm - 5:00 pm")
-                                    .font(.subheadline)
-                                    .foregroundColor(.black)
-                            }
-                            
-                            // Participants
-                            HStack(spacing: -8) {
-                                // First participant - dark blue
-                                Circle()
-                                    .fill(Color.blue)
-                                    .frame(width: 24, height: 24)
-                                    .overlay(
-                                        Text("👤")
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                    )
-                                
-                                // Second participant - light green
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 24, height: 24)
-                                    .overlay(
-                                        Text("👤")
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                    )
-                                
-                                // Third participant - light purple
-                                Circle()
-                                    .fill(Color.purple)
-                                    .frame(width: 24, height: 24)
-                                    .overlay(
-                                        Text("👤")
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                    )
-                                
-                                // Additional participant slots
-                                ForEach(0..<3, id: \.self) { _ in
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 24, height: 24)
-                                        .overlay(
-                                            Text("+")
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                        )
-                                }
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        // Orange character
-                        Text("😊")
-                            .font(.system(size: 30))
+                            )
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
                 }
             }
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .frame(width: 230)
         }
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-        .frame(width: 200)
+        .buttonStyle(PlainButtonStyle()) // Remove default button styling
     }
     
     // MARK: - Escape Room Card
     
     private func escapeRoomCard() -> some View {
         VStack(spacing: 0) {
-            // Card header
+            // Main card with blue.png background
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.blue)
-                    .frame(height: 120)
-                
-                VStack {
-                    HStack {
-                        Text("Rainy")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue)
-                            .cornerRadius(8)
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
-                    
-                    Spacer()
-                }
-            }
-            
-            // Card content
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                    Text("Escape for")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.black)
-                }
-                
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundColor(.gray)
-                    Text("Today 7:00 pm")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                
-                // Participants
-                HStack(spacing: -8) {
-                    Circle()
-                        .fill(Color.blue.opacity(0.7))
-                        .frame(width: 24, height: 24)
+                if let image = UIImage(named: "blue") {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 230)  // ← Make image bigger by increasing height
+                        .clipped()
+                } else {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange)
+                        .frame(height: 230)
                         .overlay(
-                            Text("👤")
-                                .font(.caption)
+                            Text("Blue Image Not Found")
                                 .foregroundColor(.white)
-                        )
-                    
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Text("➕")
                                 .font(.caption)
-                                .foregroundColor(.white)
                         )
                 }
             }
-            .padding(12)
-            .background(Color.white)
         }
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-        .frame(width: 200)
+        .frame(width: 230)
     }
     
     // MARK: - Upcoming Section from Image
@@ -403,8 +264,12 @@ struct HomeView: View {
                     Text("No upcoming events")
                         .foregroundColor(.gray)
                 )
-                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+             .padding(12)
+            .background(Color.white)
         }
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .frame(width: 200)
     }
     
     // MARK: - Bottom Navigation from Image
@@ -458,8 +323,6 @@ struct HomeView: View {
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.8))
     }
-    
-
 }
 
 #Preview {
