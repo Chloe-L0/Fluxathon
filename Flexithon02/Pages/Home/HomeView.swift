@@ -12,30 +12,10 @@ struct HomeView: View {
     @EnvironmentObject var userSelection: UserSelection
     @State private var showManualInput = false
     @State private var cityInput = ""
+    @State private var showCitySelection = false
 
     var body: some View {
         VStack(spacing: 0) {
-            // Status bar
-            HStack {
-                Text("9:41")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.black)
-                
-                Spacer()
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "cellularbars")
-                        .font(.system(size: 12))
-                    Image(systemName: "wifi")
-                        .font(.system(size: 12))
-                    Image(systemName: "battery.100")
-                        .font(.system(size: 12))
-                }
-                .foregroundColor(.black)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            
             // Main content
             ScrollView {
                 VStack(spacing: 20) {
@@ -55,7 +35,7 @@ struct HomeView: View {
             // Bottom Navigation Bar
             bottomNavigationFromImage()
         }
-        .background(Color.white)
+        .background(Color.white.ignoresSafeArea())
         .task {
             await viewModel.fetchWeatherForCurrentLocation()
         }
@@ -96,51 +76,99 @@ struct HomeView: View {
             // Main dark weather card
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.gray.opacity(0.8))
+                    .fill(Color.black)
                     .frame(height: 180)
                 
-                HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("78°F")
-                            .font(.system(size: 48, weight: .bold))
-                            .foregroundColor(.white)
+                if viewModel.isLoading {
+                    loadingView()
+                } else if let weather = viewModel.weather {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("\(Int(weather.temperature))°C")
+                                .font(.system(size: 48, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Text(weather.cityName)
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
                         
-                        Text("Savannah, GA")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack {
-                        Text("OCT 24")
-                            .font(.headline)
-                            .foregroundColor(.white)
+                        Spacer()
                         
-                        // Blue character
-                        Text("👀")
-                            .font(.system(size: 40))
+                        VStack {
+                            Text(DateFormatter.monthDay.string(from: Date()))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            // Weather emoji based on condition
+                            Text(weatherEmoji(for: weather.condition))
+                                .font(.system(size: 40))
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                } else {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("--°C")
+                                .font(.system(size: 48, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Text("Tap to select city")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack {
+                            Text(DateFormatter.monthDay.string(from: Date()))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Text("🌤️")
+                                .font(.system(size: 40))
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+            }
+            .onTapGesture {
+                showCitySelection = true
             }
             
             // Weather details grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                weatherDetailFromImage(label: "Feels like", value: "78°F")
-                weatherDetailFromImage(label: "Humidity", value: "40%")
-                weatherDetailFromImage(label: "Wind", value: "3.6 m/s")
-                weatherDetailFromImage(label: "Pressure", value: "1021 hPa")
+            if let weather = viewModel.weather {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    weatherDetailFromImage(label: "Feels like", value: "\(Int(weather.feelsLike))°C")
+                    weatherDetailFromImage(label: "Humidity", value: "\(weather.humidity)%")
+                    weatherDetailFromImage(label: "Wind", value: "\(String(format: "%.1f", weather.windSpeed)) m/s")
+                    weatherDetailFromImage(label: "Pressure", value: "\(weather.pressure) hPa")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 20)
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    weatherDetailFromImage(label: "Feels like", value: "--°C")
+                    weatherDetailFromImage(label: "Humidity", value: "--%")
+                    weatherDetailFromImage(label: "Wind", value: "-- m/s")
+                    weatherDetailFromImage(label: "Pressure", value: "-- hPa")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 20)
         }
         .background(Color.white)
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .sheet(isPresented: $showCitySelection) {
+            CitySelectionView(viewModel: viewModel)
+        }
     }
     
     // MARK: - Weather Detail from Image
@@ -322,6 +350,124 @@ struct HomeView: View {
         }
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.8))
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func weatherEmoji(for condition: String) -> String {
+        switch condition.lowercased() {
+        case "clear":
+            return "☀️"
+        case "clouds":
+            return "☁️"
+        case "rain":
+            return "🌧️"
+        case "snow":
+            return "❄️"
+        case "thunderstorm":
+            return "⛈️"
+        case "mist", "fog":
+            return "🌫️"
+        default:
+            return "🌤️"
+        }
+    }
+}
+
+// MARK: - Date Formatter Extension
+
+extension DateFormatter {
+    static let monthDay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM dd"
+        return formatter
+    }()
+}
+
+// MARK: - City Selection View
+
+struct CitySelectionView: View {
+    @ObservedObject var viewModel: HomeViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    @State private var recentCities = ["New York", "London", "Tokyo", "Paris", "Sydney"]
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // Search bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    
+                    TextField("Search for a city...", text: $searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                .padding(.horizontal)
+                
+                // Recent cities
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Recent Cities")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        ForEach(recentCities, id: \.self) { city in
+                            Button(action: {
+                                selectCity(city)
+                            }) {
+                                Text(city)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    .background(Color.blue)
+                                    .cornerRadius(20)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                
+                // Manual input section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Enter City Name")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    HStack {
+                        TextField("City name", text: $searchText)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        
+                        Button("Search") {
+                            if !searchText.isEmpty {
+                                selectCity(searchText)
+                            }
+                        }
+                        .disabled(searchText.isEmpty)
+                    }
+                    .padding(.horizontal)
+                }
+                
+                Spacer()
+            }
+            .navigationTitle("Select City")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func selectCity(_ city: String) {
+        Task {
+            await viewModel.fetchWeatherForCity(city)
+            dismiss()
+        }
     }
 }
 
